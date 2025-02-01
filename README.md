@@ -1,4 +1,4 @@
-# search-server MCP Server
+# mcp-google-server A MCP Server for Google Custom Search
 
 A Model Context Protocol server that provides web search capabilities using Google Custom Search API.
 
@@ -57,8 +57,12 @@ On Windows: `%APPDATA%/Claude/claude_desktop_config.json`
 ```json
 {
   "mcpServers": {
-    "search": {
-      "command": "/path/to/search-server/build/index.js",
+    "google-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@adenot/mcp-google-search"
+      ],
       "env": {
         "GOOGLE_API_KEY": "your-api-key-here",
         "GOOGLE_SEARCH_ID": "your-search-engine-id-here"

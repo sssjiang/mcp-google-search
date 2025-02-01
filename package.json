@@ -4,7 +4,7 @@
   "description": "A Model Context Protocol server for Google Search",
   "type": "module",
   "bin": {
-    "search-server": "./build/index.js"
+    "mcp-google-search": "./build/index.js"
   },
   "files": [
     "build"
