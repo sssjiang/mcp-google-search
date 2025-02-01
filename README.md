@@ -65,7 +65,7 @@ On Windows: `%APPDATA%/Claude/claude_desktop_config.json`
       ],
       "env": {
         "GOOGLE_API_KEY": "your-api-key-here",
-        "GOOGLE_SEARCH_ID": "your-search-engine-id-here"
+        "GOOGLE_SEARCH_ENGINE_ID": "your-search-engine-id-here"
       }
     }
   }
