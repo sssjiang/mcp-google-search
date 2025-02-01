@@ -1,5 +1,5 @@
 {
-  "name": "mcp-google-search",
+  "name": "@adenot/mcp-google-search",
   "version": "0.1.0",
   "description": "A Model Context Protocol server for Google Search",
   "type": "module",
