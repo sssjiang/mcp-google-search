@@ -1,7 +1,7 @@
-# mcp-google-server A MCP Server for Google Custom Search
+# mcp-google-server A MCP Server for Google Custom Search and Webpage Reading
 [![smithery badge](https://smithery.ai/badge/@adenot/mcp-google-search)](https://smithery.ai/server/@adenot/mcp-google-search)
 
-A Model Context Protocol server that provides web search capabilities using Google Custom Search API.
+A Model Context Protocol server that provides web search capabilities using Google Custom Search API and webpage content extraction functionality.
 
 ## Setup
 
@@ -48,6 +48,21 @@ For development with auto-rebuild:
 npm run watch
 ```
 
+## Features
+
+### Search Tool
+Perform web searches using Google Custom Search API:
+- Search the entire web or specific sites
+- Control number of results (1-10)
+- Get structured results with title, link, and snippet
+
+### Webpage Reader Tool
+Extract content from any webpage:
+- Fetch and parse webpage content
+- Extract page title and main text
+- Clean content by removing scripts and styles
+- Return structured data with title, text, and URL
+
 ## Installation
 
 ### Installing via Smithery
@@ -78,6 +93,38 @@ On Windows: `%APPDATA%/Claude/claude_desktop_config.json`
       }
     }
   }
+}
+```
+
+## Usage
+
+### Search Tool
+```json
+{
+  "name": "search",
+  "arguments": {
+    "query": "your search query",
+    "num": 5  // optional, default is 5, max is 10
+  }
+}
+```
+
+### Webpage Reader Tool
+```json
+{
+  "name": "read_webpage",
+  "arguments": {
+    "url": "https://example.com"
+  }
+}
+```
+
+Example response from webpage reader:
+```json
+{
+  "title": "Example Domain",
+  "text": "Extracted and cleaned webpage content...",
+  "url": "https://example.com"
 }
 ```
 

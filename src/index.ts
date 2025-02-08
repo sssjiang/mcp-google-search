@@ -8,6 +8,7 @@ import {
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 import axios from 'axios';
+import * as cheerio from 'cheerio';
 
 const API_KEY = process.env.GOOGLE_API_KEY;
 const SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID;
@@ -26,6 +27,12 @@ interface SearchResult {
   snippet: string;
 }
 
+interface WebpageContent {
+  title: string;
+  text: string;
+  url: string;
+}
+
 const isValidSearchArgs = (
   args: any
 ): args is { query: string; num?: number } =>
@@ -33,6 +40,13 @@ const isValidSearchArgs = (
   args !== null &&
   typeof args.query === 'string' &&
   (args.num === undefined || typeof args.num === 'number');
+
+const isValidWebpageArgs = (
+  args: any
+): args is { url: string } =>
+  typeof args === 'object' &&
+  args !== null &&
+  typeof args.url === 'string';
 
 class SearchServer {
   private server: Server;
@@ -92,64 +106,123 @@ class SearchServer {
             required: ['query'],
           },
         },
+        {
+          name: 'read_webpage',
+          description: 'Fetch and extract text content from a webpage',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              url: {
+                type: 'string',
+                description: 'URL of the webpage to read',
+              },
+            },
+            required: ['url'],
+          },
+        },
       ],
     }));
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      if (request.params.name !== 'search') {
-        throw new McpError(
-          ErrorCode.MethodNotFound,
-          `Unknown tool: ${request.params.name}`
-        );
-      }
+      if (request.params.name === 'search') {
+        if (!isValidSearchArgs(request.params.arguments)) {
+          throw new McpError(
+            ErrorCode.InvalidParams,
+            'Invalid search arguments'
+          );
+        }
 
-      if (!isValidSearchArgs(request.params.arguments)) {
-        throw new McpError(
-          ErrorCode.InvalidParams,
-          'Invalid search arguments'
-        );
-      }
+        const { query, num = 5 } = request.params.arguments;
 
-      const { query, num = 5 } = request.params.arguments;
-
-      try {
-        const response = await this.axiosInstance.get('', {
-          params: {
-            q: query,
-            num: Math.min(num, 10),
-          },
-        });
-
-        const results: SearchResult[] = response.data.items.map((item: any) => ({
-          title: item.title,
-          link: item.link,
-          snippet: item.snippet,
-        }));
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(results, null, 2),
+        try {
+          const response = await this.axiosInstance.get('', {
+            params: {
+              q: query,
+              num: Math.min(num, 10),
             },
-          ],
-        };
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
+          });
+
+          const results: SearchResult[] = response.data.items.map((item: any) => ({
+            title: item.title,
+            link: item.link,
+            snippet: item.snippet,
+          }));
+
           return {
             content: [
               {
                 type: 'text',
-                text: `Search API error: ${
-                  error.response?.data?.error?.message ?? error.message
-                }`,
+                text: JSON.stringify(results, null, 2),
               },
             ],
-            isError: true,
           };
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Search API error: ${
+                    error.response?.data?.error?.message ?? error.message
+                  }`,
+                },
+              ],
+              isError: true,
+            };
+          }
+          throw error;
         }
-        throw error;
+      } else if (request.params.name === 'read_webpage') {
+        if (!isValidWebpageArgs(request.params.arguments)) {
+          throw new McpError(
+            ErrorCode.InvalidParams,
+            'Invalid webpage arguments'
+          );
+        }
+
+        const { url } = request.params.arguments;
+
+        try {
+          const response = await axios.get(url);
+          const $ = cheerio.load(response.data);
+
+          // Remove script and style elements
+          $('script, style').remove();
+
+          const content: WebpageContent = {
+            title: $('title').text().trim(),
+            text: $('body').text().trim().replace(/\s+/g, ' '),
+            url: url,
+          };
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(content, null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Webpage fetch error: ${error.message}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+          throw error;
+        }
       }
+
+      throw new McpError(
+        ErrorCode.MethodNotFound,
+        `Unknown tool: ${request.params.name}`
+      );
     });
   }
 
