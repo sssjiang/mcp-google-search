@@ -87,7 +87,7 @@ class SearchServer {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
         {
-          name: 'search',
+          name: 'google_search',
           description: 'Perform a web search query',
           inputSchema: {
             type: 'object',
@@ -124,7 +124,7 @@ class SearchServer {
     }));
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      if (request.params.name === 'search') {
+      if (request.params.name === 'google_search') {
         if (!isValidSearchArgs(request.params.arguments)) {
           throw new McpError(
             ErrorCode.InvalidParams,
